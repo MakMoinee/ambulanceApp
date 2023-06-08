@@ -56,9 +56,11 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
         ImageView imgProfile = headView.findViewById(R.id.imgPicture);
         txtEmail.setText(users.getEmail());
         txtName.setText(String.format("%S %S", users.getFirstName(), users.getLastName()));
-        if (users.getPictureURI() != null && users.getPictureURI()!="" ) {
+        if (users.getPictureURI() != null && users.getPictureURI() != "") {
             Uri uri = Uri.parse(users.getPictureURI());
             Picasso.get().load(uri).into(imgProfile);
+        } else {
+            imgProfile.setImageResource(R.drawable.user);
         }
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, binding.appBarMainForm.toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(new DrawerLayout.DrawerListener() {
