@@ -7,6 +7,7 @@ import lombok.Data;
 @Data
 public class FirebaseRequestBody {
     private String collectionName;
+    private String email;
     private String documentID;
     private String whereFromField;
     private Object whereValueField;
@@ -22,6 +23,7 @@ public class FirebaseRequestBody {
         this.whereFromField = builder.whereFromField;
         this.whereValueField = builder.whereValueField;
         this.params = builder.params;
+        this.email = builder.email;
     }
 
     public static class RequestBodyBuilder {
@@ -30,6 +32,8 @@ public class FirebaseRequestBody {
         private String whereFromField;
         private Object whereValueField;
         private Map<String,Object> params;
+
+        private String email;
 
         public RequestBodyBuilder() {
         }
@@ -56,6 +60,11 @@ public class FirebaseRequestBody {
 
         public RequestBodyBuilder setParams(Map<String, Object> params) {
             this.params = params;
+            return this;
+        }
+
+        public RequestBodyBuilder setEmail(String email) {
+            this.email = email;
             return this;
         }
 

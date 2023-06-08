@@ -1,5 +1,7 @@
 package com.ambulanceapp.client.models;
 
+import android.net.Uri;
+
 import lombok.Data;
 
 @Data
@@ -15,6 +17,8 @@ public class Users {
     private String birthDate;
     private String phoneNumber;
 
+    private String pictureURI;
+
     public Users() {
     }
 
@@ -28,6 +32,7 @@ public class Users {
         this.address = builder.address;
         this.birthDate = builder.birthDate;
         this.phoneNumber = builder.phoneNumber;
+        this.pictureURI = builder.pictureURI;
     }
 
     public static class UserBuilder {
@@ -41,6 +46,8 @@ public class Users {
         private String address;
         private String birthDate;
         private String phoneNumber;
+
+        private String pictureURI;
 
         public UserBuilder() {
 
@@ -88,6 +95,11 @@ public class Users {
 
         public UserBuilder setPhoneNumber(String phoneNumber) {
             this.phoneNumber = phoneNumber;
+            return this;
+        }
+
+        public UserBuilder setPictureURI(String pictureURI) {
+            this.pictureURI = pictureURI;
             return this;
         }
 

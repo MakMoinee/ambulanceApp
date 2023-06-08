@@ -13,4 +13,13 @@
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorSecondary">#03A9F4</item>
     </style>
+
+    <style name="Theme.AmbulanceApp.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.AmbulanceApp.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.AmbulanceApp.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

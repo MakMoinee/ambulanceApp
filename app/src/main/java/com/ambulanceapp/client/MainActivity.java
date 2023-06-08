@@ -1,13 +1,11 @@
 package com.ambulanceapp.client;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Toast;
 
-import com.ambulanceapp.client.common.MapForm;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.ambulanceapp.client.databinding.ActivityMainBinding;
 import com.ambulanceapp.client.interfaces.FirebaseListener;
 import com.ambulanceapp.client.models.FirebaseRequestBody;
@@ -15,13 +13,9 @@ import com.ambulanceapp.client.models.Users;
 import com.ambulanceapp.client.parser.CommonParser;
 import com.ambulanceapp.client.preference.UserPref;
 import com.ambulanceapp.client.services.FirebaseRequest;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.List;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,6 +27,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        Users mUsers = new UserPref(MainActivity.this).getUsers();
+        if (mUsers.getDocumentID() != null && mUsers.getDocumentID() != "") {
+            Intent intent = new Intent(MainActivity.this, DashboardActivity.class);
+            startActivity(intent);
+            finish();
+        }
         request = new FirebaseRequest();
         setListeners();
     }
@@ -96,5 +96,17 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, GoogleSignInActivity.class);
             startActivity(intent);
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Users mUsers = new UserPref(MainActivity.this).getUsers();
+        if (mUsers.getDocumentID() != null && mUsers.getDocumentID() != "") {
+            Toast.makeText(MainActivity.this, "Login Successfully", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(MainActivity.this, DashboardActivity.class);
+            startActivity(intent);
+            finish();
+        }
     }
 }

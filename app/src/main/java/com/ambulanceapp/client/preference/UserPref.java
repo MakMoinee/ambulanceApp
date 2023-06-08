@@ -2,6 +2,7 @@ package com.ambulanceapp.client.preference;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 
 import com.ambulanceapp.client.models.Users;
 
@@ -24,6 +25,13 @@ public class UserPref {
         editor.putString("lastName", users.getLastName());
         editor.putString("address", users.getAddress());
         editor.putString("birthDate", users.getBirthDate());
+        String picURI ="";
+        try{
+            picURI = users.getPictureURI();
+        }catch (Exception e){
+            picURI = "";
+        }
+        editor.putString("pictureURI", picURI);
         editor.commit();
         editor.apply();
     }
@@ -38,6 +46,7 @@ public class UserPref {
                 .setLastName(pref.getString("lastName", ""))
                 .setAddress(pref.getString("address", ""))
                 .setBirthDate(pref.getString("birthDate", ""))
+                .setPictureURI(pref.getString("pictureURI", ""))
                 .build();
 
         return users;
