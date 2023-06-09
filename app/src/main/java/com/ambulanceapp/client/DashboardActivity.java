@@ -1,7 +1,10 @@
 package com.ambulanceapp.client;
 
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -15,6 +18,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -28,6 +33,7 @@ import com.ambulanceapp.client.databinding.ActivityDashboardBinding;
 import com.ambulanceapp.client.models.Users;
 import com.ambulanceapp.client.preference.UserPref;
 import com.ambulanceapp.client.ui.home.HomeFragment;
+import com.ambulanceapp.client.ui.hospitals.HospitalFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.squareup.picasso.Picasso;
 
@@ -38,6 +44,10 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
     private FragmentTransaction ft;
     private FragmentManager fm;
     private DrawerLayout drawer;
+    private Boolean locationPermissionGranted = false;
+    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,16 +95,45 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
             }
         });
         toggle.syncState();
+        setTitle("Home");
         fragment = new HomeFragment();
         fm = getSupportFragmentManager();
         ft = fm.beginTransaction();
         ft.replace(R.id.frame, fragment);
         ft.commit();
+        getLocationPermission();
+    }
+
+    private void getLocationPermission() {
+        /*
+         * Request location permission, so that we can get the location of the
+         * device. The result of the permission request is handled by a callback,
+         * onRequestPermissionsResult.
+         */
+        if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(getApplicationContext(),
+                ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            locationPermissionGranted = true;
+        } else {
+            ActivityCompat.requestPermissions(DashboardActivity.this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+
+            ActivityCompat.requestPermissions(DashboardActivity.this,
+                    new String[]{ACCESS_COARSE_LOCATION},
+                    PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+
+        }
+//        fetchLocation();
+//        getLocation();
     }
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.nav_home) {
+            setTitle("Home");
             fragment = new HomeFragment();
             fm = getSupportFragmentManager();
             ft = fm.beginTransaction();
@@ -103,6 +142,19 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
             drawer.closeDrawer(GravityCompat.START);
             return true;
         } else if (item.getItemId() == R.id.nav_hospital) {
+            getLocationPermission();
+            if (locationPermissionGranted) {
+                setTitle("Hospitals");
+                fragment = new HospitalFragment(DashboardActivity.this);
+                fm = getSupportFragmentManager();
+                ft = fm.beginTransaction();
+                ft.replace(R.id.frame, fragment);
+                ft.commit();
+                drawer.closeDrawer(GravityCompat.START);
+                return true;
+            } else {
+                Toast.makeText(DashboardActivity.this, "Please allow location permission first", Toast.LENGTH_SHORT).show();
+            }
 
         } else if (item.getItemId() == R.id.nav_feedback) {
 
