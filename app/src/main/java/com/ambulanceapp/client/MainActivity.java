@@ -2,11 +2,16 @@ package com.ambulanceapp.client;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.ambulanceapp.client.databinding.ActivityMainBinding;
+import com.ambulanceapp.client.databinding.DialogSignInRoleBinding;
 import com.ambulanceapp.client.interfaces.FirebaseListener;
 import com.ambulanceapp.client.models.FirebaseRequestBody;
 import com.ambulanceapp.client.models.Users;
@@ -15,12 +20,18 @@ import com.ambulanceapp.client.preference.UserPref;
 import com.ambulanceapp.client.services.FirebaseRequest;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     ActivityMainBinding binding;
     FirebaseRequest request;
+
+    DialogSignInRoleBinding signInRoleBinding;
+
+    AlertDialog signRoleAlert;
+    String selectedRole = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +104,43 @@ public class MainActivity extends AppCompatActivity {
         });
 
         binding.btnGoogleSign.setOnClickListener(v -> {
+
+            signInRoleBinding = DialogSignInRoleBinding.inflate(getLayoutInflater(), null, false);
+            AlertDialog.Builder mBuilder = new AlertDialog.Builder(MainActivity.this);
+            mBuilder.setView(signInRoleBinding.getRoot());
+            initDialogViews();
+            setDialogListeners();
+            signRoleAlert = mBuilder.create();
+            signRoleAlert.setCancelable(true);
+            signRoleAlert.show();
+        });
+    }
+
+    private void initDialogViews() {
+        List<String> optionsList = new ArrayList<>();
+        optionsList.add("ambulance");
+        optionsList.add("enforcer");
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, optionsList);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        signInRoleBinding.spinner.setAdapter(adapter);
+    }
+
+    private void setDialogListeners() {
+        signInRoleBinding.spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedRole = (String) parent.getItemAtPosition(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        signInRoleBinding.btnProceed.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, GoogleSignInActivity.class);
+            intent.putExtra("role", selectedRole);
             startActivity(intent);
         });
     }

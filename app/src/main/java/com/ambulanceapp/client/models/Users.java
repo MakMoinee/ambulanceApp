@@ -19,6 +19,8 @@ public class Users {
 
     private String pictureURI;
 
+    private String role;
+
     public Users() {
     }
 
@@ -33,6 +35,7 @@ public class Users {
         this.birthDate = builder.birthDate;
         this.phoneNumber = builder.phoneNumber;
         this.pictureURI = builder.pictureURI;
+        this.role = builder.role;
     }
 
     public static class UserBuilder {
@@ -48,6 +51,8 @@ public class Users {
         private String phoneNumber;
 
         private String pictureURI;
+
+        private String role;
 
         public UserBuilder() {
 
@@ -100,6 +105,11 @@ public class Users {
 
         public UserBuilder setPictureURI(String pictureURI) {
             this.pictureURI = pictureURI;
+            return this;
+        }
+
+        public UserBuilder setRole(String role) {
+            this.role = role;
             return this;
         }
 

@@ -42,6 +42,7 @@ public class GoogleSignInActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseRequest request;
     ActivityResultLauncher<IntentSenderRequest> oneTapLauncher;
+    String role = "";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,6 +50,7 @@ public class GoogleSignInActivity extends AppCompatActivity {
         binding = ActivityGoogleSigninBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         request = new FirebaseRequest();
+        role = getIntent().getStringExtra("role");
         setSignIn();
     }
 
@@ -66,10 +68,10 @@ public class GoogleSignInActivity extends AppCompatActivity {
 
 
                     if (idToken != null) {
-                        String picURI ="";
-                        try{
+                        String picURI = "";
+                        try {
                             picURI = credential.getProfilePictureUri().toString();
-                        }catch (Exception e){
+                        } catch (Exception e) {
                             picURI = "";
                         }
                         Users users = new Users.UserBuilder()
@@ -78,6 +80,7 @@ public class GoogleSignInActivity extends AppCompatActivity {
                                 .setEmail(username)
                                 .setPassword("default")
                                 .setPictureURI(picURI)
+                                .setRole(role)
                                 .setPhoneNumber(credential.getPhoneNumber())
                                 .build();
                         FirebaseRequestBody body = new FirebaseRequestBody.RequestBodyBuilder()
