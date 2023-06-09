@@ -40,9 +40,15 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         Users mUsers = new UserPref(MainActivity.this).getUsers();
         if (mUsers.getDocumentID() != null && mUsers.getDocumentID() != "") {
-            Intent intent = new Intent(MainActivity.this, DashboardActivity.class);
-            startActivity(intent);
-            finish();
+            if (mUsers.getRole().equals("ambulance")) {
+                Intent intent = new Intent(MainActivity.this, DashboardActivity.class);
+                startActivity(intent);
+                finish();
+            } else if (mUsers.getRole().equals("enforcer")) {
+                Intent intent = new Intent(MainActivity.this, EnforcerActivity.class);
+                startActivity(intent);
+                finish();
+            }
         }
         request = new FirebaseRequest();
         setListeners();
@@ -151,9 +157,16 @@ public class MainActivity extends AppCompatActivity {
         Users mUsers = new UserPref(MainActivity.this).getUsers();
         if (mUsers.getDocumentID() != null && mUsers.getDocumentID() != "") {
             Toast.makeText(MainActivity.this, "Login Successfully", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(MainActivity.this, DashboardActivity.class);
-            startActivity(intent);
-            finish();
+            if (mUsers.getRole().equals("ambulance")) {
+                Intent intent = new Intent(MainActivity.this, DashboardActivity.class);
+                startActivity(intent);
+                finish();
+            } else if (mUsers.getRole().equals("enforcer")) {
+                Intent intent = new Intent(MainActivity.this, EnforcerActivity.class);
+                startActivity(intent);
+                finish();
+            }
+
         }
     }
 }

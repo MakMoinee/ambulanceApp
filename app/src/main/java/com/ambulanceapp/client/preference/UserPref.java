@@ -25,6 +25,7 @@ public class UserPref {
         editor.putString("lastName", users.getLastName());
         editor.putString("address", users.getAddress());
         editor.putString("birthDate", users.getBirthDate());
+        editor.putString("role", users.getRole());
         String picURI ="";
         try{
             picURI = users.getPictureURI();
@@ -47,6 +48,7 @@ public class UserPref {
                 .setAddress(pref.getString("address", ""))
                 .setBirthDate(pref.getString("birthDate", ""))
                 .setPictureURI(pref.getString("pictureURI", ""))
+                .setRole(pref.getString("role", ""))
                 .build();
 
         return users;
