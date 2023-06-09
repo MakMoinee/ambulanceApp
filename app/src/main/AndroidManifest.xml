@@ -23,7 +23,7 @@
             android:name=".EnforcerActivity"
             android:exported="false"
             android:label="@string/title_activity_enforcer"
-            android:theme="@style/Theme.AmbulanceApp.NoActionBar" />
+            android:theme="@style/RedTheme" />
         <activity
             android:name=".DashboardActivity"
             android:exported="false"

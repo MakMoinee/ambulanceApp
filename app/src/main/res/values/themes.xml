@@ -5,6 +5,13 @@
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
+    <style name="RedTheme" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#F44336</item>
+        <item name="colorPrimaryVariant">#EDEDED</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">#F44336</item>
+    </style>
+
     <style name="Theme.AmbulanceApp" parent="Base.Theme.AmbulanceApp" />
 
     <style name="BlueTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
