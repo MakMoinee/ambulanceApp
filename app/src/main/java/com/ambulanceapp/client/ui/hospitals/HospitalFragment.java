@@ -7,7 +7,10 @@ import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -24,6 +27,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.ambulanceapp.client.R;
+import com.ambulanceapp.client.common.LocalDraw;
 import com.ambulanceapp.client.databinding.FragmentHospitalsBinding;
 import com.ambulanceapp.client.interfaces.FirebaseListener;
 import com.ambulanceapp.client.interfaces.NearbyPlaceListener;
@@ -41,6 +45,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -130,10 +135,13 @@ public class HospitalFragment extends Fragment {
                                 if (originalLocation == null) {
                                     originalLocation = currentLocation;
                                 }
+                                Drawable originalDrawable = getResources().getDrawable(R.drawable.ambulance);
+                                BitmapDescriptor bitmapDescriptor = LocalDraw.getDescriptor(originalDrawable);
+
                                 gMap.addMarker(new MarkerOptions()
                                         .position(currentLocation)
                                         .title("Your Location")
-                                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                                        .icon(bitmapDescriptor));
                                 gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 14));
 
                                 request.getNearbyPlace(currentLocation, new NearbyPlaceListener() {
@@ -143,12 +151,15 @@ public class HospitalFragment extends Fragment {
                                             FullNearbyPlaceResponse fullNearbyPlaceResponse = (FullNearbyPlaceResponse) any;
                                             if (fullNearbyPlaceResponse.getResults().size() > 0) {
                                                 List<NearbyPlaceResponse> results = removeDuplicates(fullNearbyPlaceResponse.getResults());
+                                                Drawable originalDrawable = getResources().getDrawable(R.drawable.hospital);
+                                                BitmapDescriptor bitmapDescriptor = LocalDraw.getDescriptor(originalDrawable);
                                                 for (NearbyPlaceResponse resp : results) {
                                                     LatLng latLng = new LatLng(resp.getGeometry().getLocation().getLat(), resp.getGeometry().getLocation().getLng());
+
                                                     Marker marker = gMap.addMarker(new MarkerOptions()
                                                             .position(latLng)
                                                             .title(resp.getName())
-                                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                                                            .icon(bitmapDescriptor));
                                                     markerList.add(marker);
                                                     addListenersToMarkers();
                                                     listOfHospitalLocations.add(latLng);

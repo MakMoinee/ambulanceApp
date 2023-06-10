@@ -8,6 +8,7 @@ import java.util.List;
 
 public class Common {
 
+    public static String deviceToken = "";
     public static final double DEFAULT_RADIUS = 1000;
 
     public static List<LatLng> createCircle(LatLng center, double radius) {
