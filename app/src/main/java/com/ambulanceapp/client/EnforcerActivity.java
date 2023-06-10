@@ -1,7 +1,10 @@
 package com.ambulanceapp.client;
 
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -15,11 +18,18 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.ambulanceapp.client.databinding.ActivityEnforcerBinding;
 import com.ambulanceapp.client.models.Users;
 import com.ambulanceapp.client.preference.UserPref;
+import com.ambulanceapp.client.ui.map.EnforcerMapFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.squareup.picasso.Picasso;
 
@@ -27,6 +37,14 @@ public class EnforcerActivity extends AppCompatActivity implements NavigationVie
 
     private ActivityEnforcerBinding binding;
     DrawerLayout drawer;
+
+    Fragment fragment;
+    FragmentManager fm;
+    FragmentTransaction ft;
+
+    Boolean locationPermissionGranted = false;
+
+    private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +93,31 @@ public class EnforcerActivity extends AppCompatActivity implements NavigationVie
         });
         toggle.syncState();
         setTitle("Home");
+        getLocationPermission();
+    }
 
+    private void getLocationPermission() {
+        /*
+         * Request location permission, so that we can get the location of the
+         * device. The result of the permission request is handled by a callback,
+         * onRequestPermissionsResult.
+         */
+        if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(getApplicationContext(),
+                ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            locationPermissionGranted = true;
+        } else {
+            ActivityCompat.requestPermissions(EnforcerActivity.this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+
+            ActivityCompat.requestPermissions(EnforcerActivity.this,
+                    new String[]{ACCESS_COARSE_LOCATION},
+                    PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+
+        }
     }
 
     @Override
@@ -109,6 +151,23 @@ public class EnforcerActivity extends AppCompatActivity implements NavigationVie
                     .setCancelable(false)
                     .show();
             return true;
+        } else if (item.getItemId() == R.id.nav_map) {
+            getLocationPermission();
+            if (locationPermissionGranted) {
+                setTitle("Maps");
+                fragment = new EnforcerMapFragment(EnforcerActivity.this);
+                fm = getSupportFragmentManager();
+                ft = fm.beginTransaction();
+                ft.replace(R.id.fragment, fragment);
+                ft.commit();
+                drawer.closeDrawer(GravityCompat.START);
+                return true;
+            } else {
+                Toast.makeText(EnforcerActivity.this, "Allow location permission first", Toast.LENGTH_SHORT).show();
+            }
+
+        } else if (item.getItemId() == R.id.nav_home) {
+
         }
         return false;
     }

@@ -107,8 +107,14 @@ public class GoogleSignInActivity extends AppCompatActivity {
                                     }
 
                                     if (u != null) {
-                                        new UserPref(GoogleSignInActivity.this).storeUser(u);
-                                        finish();
+                                        if (u.getRole().equals(role)) {
+                                            new UserPref(GoogleSignInActivity.this).storeUser(u);
+                                            finish();
+                                        } else {
+                                            Toast.makeText(GoogleSignInActivity.this, "Failed to sign in account, this email is associated already with a role but not " + role, Toast.LENGTH_SHORT).show();
+                                            finish();
+                                        }
+
                                     } else {
                                         Toast.makeText(GoogleSignInActivity.this, "Failed to sign in account, please try again later", Toast.LENGTH_SHORT).show();
                                         finish();

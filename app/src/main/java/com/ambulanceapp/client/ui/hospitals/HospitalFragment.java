@@ -10,9 +10,11 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -23,10 +25,16 @@ import androidx.fragment.app.Fragment;
 
 import com.ambulanceapp.client.R;
 import com.ambulanceapp.client.databinding.FragmentHospitalsBinding;
+import com.ambulanceapp.client.interfaces.FirebaseListener;
 import com.ambulanceapp.client.interfaces.NearbyPlaceListener;
+import com.ambulanceapp.client.models.Enforcers;
+import com.ambulanceapp.client.models.FirebaseRequestBody;
 import com.ambulanceapp.client.models.FullNearbyPlaceResponse;
 import com.ambulanceapp.client.models.NearbyPlaceResponse;
+import com.ambulanceapp.client.models.Users;
+import com.ambulanceapp.client.preference.UserPref;
 import com.ambulanceapp.client.services.DirectionsRequest;
+import com.ambulanceapp.client.services.FirebaseRequest;
 import com.ambulanceapp.client.services.NearbyPlaceRequest;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -39,11 +47,20 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.google.maps.android.PolyUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class HospitalFragment extends Fragment {
 
@@ -52,6 +69,7 @@ public class HospitalFragment extends Fragment {
     Context mContext;
     GoogleMap gMap;
     LatLng currentLocation;
+    LatLng originalLocation;
 
     private FusedLocationProviderClient providerClient;
     Boolean locationPermissionGranted = false;
@@ -62,15 +80,26 @@ public class HospitalFragment extends Fragment {
     Polyline line = null;
     ProgressDialog pdLoad;
     DirectionsRequest directionsRequest;
+    FirebaseRequest firebaseRequest;
+
+    ScheduledExecutorService executor;
 
     public HospitalFragment(Context mContext) {
         this.mContext = mContext;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentHospitalsBinding.inflate(inflater, container, false);
+        firebaseRequest = new FirebaseRequest();
         providerClient = LocationServices.getFusedLocationProviderClient(mContext);
         directionsRequest = new DirectionsRequest(mContext);
         pdLoad = new ProgressDialog(mContext);
@@ -98,6 +127,9 @@ public class HospitalFragment extends Fragment {
                         if (location != null) {
                             new Handler().postDelayed(() -> {
                                 currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                                if (originalLocation == null) {
+                                    originalLocation = currentLocation;
+                                }
                                 gMap.addMarker(new MarkerOptions()
                                         .position(currentLocation)
                                         .title("Your Location")
@@ -170,6 +202,7 @@ public class HospitalFragment extends Fragment {
                                             .color(Color.RED);
                                     line = gMap.addPolyline(polylineOptions);
                                     gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 16));
+                                    runUIThread();
                                 }
                             }
 
@@ -185,14 +218,69 @@ public class HospitalFragment extends Fragment {
 
 
                 });
-//                binding.relativePopup.setVisibility(View.VISIBLE);
-//                binding.txtLocation.setText(marker.getTitle());
-//                binding.txtLatLng.setText(String.format("Latitude:%s , Longitude:%s ", marker.getPosition().latitude, marker.getPosition().longitude));
-//                selectedPlace = marker.getTitle();
             }
 
             return false;
         });
+    }
+
+    private void runUIThread() {
+        Runnable runnable = () -> {
+            Log.e("runUIThread", "invoked");
+            if (currentLocation.latitude == originalLocation.latitude && currentLocation.longitude == originalLocation.longitude) {
+
+            } else {
+                getCurrentLocation();
+            }
+
+            alertEnforcers();
+
+        };
+        executor = Executors.newScheduledThreadPool(1);
+        executor.scheduleAtFixedRate(runnable, 0, 30, TimeUnit.SECONDS);
+    }
+
+    private void alertEnforcers() {
+        List<LatLng> currentLatLng = new ArrayList<>();
+        currentLatLng.add(currentLocation);
+        FirebaseRequestBody body = new FirebaseRequestBody.RequestBodyBuilder()
+                .setCollectionName(FirebaseRequest.ENFORCERS_COLLECTION)
+                .build();
+        firebaseRequest.findAllRequest(body, new FirebaseListener() {
+            @Override
+            public <T> void onSuccessAny(T any) {
+                if (any instanceof QuerySnapshot) {
+                    QuerySnapshot snapshots = (QuerySnapshot) any;
+                    List<Enforcers> enforcersList = new ArrayList<>();
+                    for (QueryDocumentSnapshot documentSnapshot : snapshots) {
+                        Enforcers enforcers = documentSnapshot.toObject(Enforcers.class);
+                        if (enforcers != null) {
+                            enforcers.setDocumentID(documentSnapshot.getId());
+                            List<LatLng> destinationLatLng = new Gson().fromJson(enforcers.getCircle(), new TypeToken<List<LatLng>>() {
+                            }.getType());
+
+                            Boolean isInsideCircle = PolyUtil.containsLocation(currentLocation, destinationLatLng, true);
+                            if (isInsideCircle) {
+                                enforcersList.add(enforcers);
+                            }
+
+                        }
+                    }
+
+                    if (enforcersList.size() > 0) {
+                        //TODO: send notification
+                    }
+                }
+            }
+
+            @Override
+            public void onError() {
+                Log.e("enforcers_empty", "true");
+            }
+        });
+        Users users = new UserPref(mContext).getUsers();
+//        DatabaseReference reference = firebaseRequest.getReference(FirebaseRequest.ENFORCERS_COLLECTION);
+//        reference.child(users.getDocumentID()).setValue();
     }
 
     private List<NearbyPlaceResponse> removeDuplicates(List<NearbyPlaceResponse> results) {
@@ -246,4 +334,9 @@ public class HospitalFragment extends Fragment {
     }
 
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
 }
