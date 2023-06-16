@@ -1,7 +1,5 @@
 package com.ambulanceapp.client.models;
 
-import android.net.Uri;
-
 import lombok.Data;
 
 @Data
@@ -16,6 +14,7 @@ public class Users {
     private String address;
     private String birthDate;
     private String phoneNumber;
+    private String token;
 
     private String pictureURI;
 
@@ -36,6 +35,7 @@ public class Users {
         this.phoneNumber = builder.phoneNumber;
         this.pictureURI = builder.pictureURI;
         this.role = builder.role;
+        this.token = builder.token;
     }
 
     public static class UserBuilder {
@@ -53,6 +53,7 @@ public class Users {
         private String pictureURI;
 
         private String role;
+        private String token;
 
         public UserBuilder() {
 
@@ -110,6 +111,11 @@ public class Users {
 
         public UserBuilder setRole(String role) {
             this.role = role;
+            return this;
+        }
+
+        public UserBuilder setToken(String token) {
+            this.token = token;
             return this;
         }
 

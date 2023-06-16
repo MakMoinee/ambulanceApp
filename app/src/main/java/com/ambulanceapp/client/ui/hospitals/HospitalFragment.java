@@ -7,9 +7,7 @@ import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -36,23 +34,22 @@ import com.ambulanceapp.client.models.FirebaseRequestBody;
 import com.ambulanceapp.client.models.FullNearbyPlaceResponse;
 import com.ambulanceapp.client.models.NearbyPlaceResponse;
 import com.ambulanceapp.client.models.Users;
-import com.ambulanceapp.client.preference.UserPref;
 import com.ambulanceapp.client.services.DirectionsRequest;
 import com.ambulanceapp.client.services.FirebaseRequest;
 import com.ambulanceapp.client.services.NearbyPlaceRequest;
+import com.ambulanceapp.client.services.SendNotifRequest;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.gson.Gson;
@@ -89,15 +86,11 @@ public class HospitalFragment extends Fragment {
 
     ScheduledExecutorService executor;
 
+    Map<String, String> mapToken = new HashMap<>();
+    SendNotifRequest sendNotifRequest;
+
     public HospitalFragment(Context mContext) {
         this.mContext = mContext;
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-
     }
 
     @Nullable
@@ -106,6 +99,7 @@ public class HospitalFragment extends Fragment {
         binding = FragmentHospitalsBinding.inflate(inflater, container, false);
         firebaseRequest = new FirebaseRequest();
         providerClient = LocationServices.getFusedLocationProviderClient(mContext);
+        sendNotifRequest = new SendNotifRequest(mContext);
         directionsRequest = new DirectionsRequest(mContext);
         pdLoad = new ProgressDialog(mContext);
         pdLoad.setMessage("Loading Directions ...");
@@ -248,7 +242,7 @@ public class HospitalFragment extends Fragment {
 
         };
         executor = Executors.newScheduledThreadPool(1);
-        executor.scheduleAtFixedRate(runnable, 0, 30, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(runnable, 0, 80, TimeUnit.SECONDS);
     }
 
     private void alertEnforcers() {
@@ -257,39 +251,97 @@ public class HospitalFragment extends Fragment {
         FirebaseRequestBody body = new FirebaseRequestBody.RequestBodyBuilder()
                 .setCollectionName(FirebaseRequest.ENFORCERS_COLLECTION)
                 .build();
-        firebaseRequest.findAllRequest(body, new FirebaseListener() {
-            @Override
-            public <T> void onSuccessAny(T any) {
-                if (any instanceof QuerySnapshot) {
-                    QuerySnapshot snapshots = (QuerySnapshot) any;
-                    List<Enforcers> enforcersList = new ArrayList<>();
-                    for (QueryDocumentSnapshot documentSnapshot : snapshots) {
-                        Enforcers enforcers = documentSnapshot.toObject(Enforcers.class);
-                        if (enforcers != null) {
-                            enforcers.setDocumentID(documentSnapshot.getId());
-                            List<LatLng> destinationLatLng = new Gson().fromJson(enforcers.getCircle(), new TypeToken<List<LatLng>>() {
-                            }.getType());
+        Log.e("body", new Gson().toJson(body));
+        try {
+            firebaseRequest.findAllRequest(body, new FirebaseListener() {
+                @Override
+                public <T> void onSuccessAny(T any) {
+                    if (any instanceof QuerySnapshot) {
+                        QuerySnapshot snapshots = (QuerySnapshot) any;
 
-                            Boolean isInsideCircle = PolyUtil.containsLocation(currentLocation, destinationLatLng, true);
-                            if (isInsideCircle) {
-                                enforcersList.add(enforcers);
+                        List<Enforcers> enforcersList = new ArrayList<>();
+                        for (QueryDocumentSnapshot documentSnapshot : snapshots) {
+                            Enforcers enforcers = documentSnapshot.toObject(Enforcers.class);
+                            if (enforcers != null) {
+
+                                enforcers.setDocumentID(documentSnapshot.getId());
+                                List<LatLng> destinationLatLng = new Gson().fromJson(enforcers.getCircle(), new TypeToken<List<LatLng>>() {
+                                }.getType());
+
+                                Boolean isInsideCircle = PolyUtil.containsLocation(currentLocation, destinationLatLng, false);
+
+                                if (!isInsideCircle) {
+                                    enforcersList.add(enforcers);
+                                }
+
                             }
+                        }
 
+                        if (enforcersList.size() > 0) {
+
+                            for (Enforcers enforcers : enforcersList) {
+
+                                try {
+                                    FirebaseRequestBody fBody = new FirebaseRequestBody.RequestBodyBuilder()
+                                            .setDocumentID(enforcers.getUserID())
+                                            .setCollectionName(FirebaseRequest.USERS_COLLECTION)
+                                            .build();
+
+                                    firebaseRequest = new FirebaseRequest();
+                                    firebaseRequest.findAllRequest(fBody, new FirebaseListener() {
+                                        @Override
+                                        public <T> void onSuccessAny(T any) {
+                                            if (any instanceof DocumentSnapshot) {
+                                                DocumentSnapshot documentSnapshot = (DocumentSnapshot) any;
+                                                if (documentSnapshot.exists()) {
+                                                    Users mUsers = documentSnapshot.toObject(Users.class);
+                                                    if (mUsers != null && mUsers.getToken() != null) {
+                                                        Log.e("mUsers", new Gson().toJson(mUsers));
+                                                        if (!mUsers.getToken().equals("")) {
+
+                                                            sendNotifRequest.pushNotification(mUsers.getToken(), new FirebaseListener() {
+                                                                @Override
+                                                                public <T> void onSuccessAny(T any) {
+                                                                    Log.e("success_send_msg", "true");
+                                                                }
+
+                                                                @Override
+                                                                public void onError() {
+                                                                    Log.e("error_send_msg", "true");
+                                                                }
+                                                            });
+                                                        }
+
+
+                                                    }
+                                                }
+
+
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onError() {
+
+                                        }
+                                    });
+                                } catch (Exception e) {
+                                    Log.e("error_here", e.getLocalizedMessage());
+                                }
+                            }
                         }
                     }
-
-                    if (enforcersList.size() > 0) {
-                        //TODO: send notification
-                    }
                 }
-            }
 
-            @Override
-            public void onError() {
-                Log.e("enforcers_empty", "true");
-            }
-        });
-        Users users = new UserPref(mContext).getUsers();
+                @Override
+                public void onError() {
+                    Log.e("enforcers_empty", "true");
+                }
+            });
+        } catch (Exception e) {
+            Log.e("HERE", e.getLocalizedMessage());
+        }
+//        Users users = new UserPref(mContext).getUsers();
 //        DatabaseReference reference = firebaseRequest.getReference(FirebaseRequest.ENFORCERS_COLLECTION);
 //        reference.child(users.getDocumentID()).setValue();
     }

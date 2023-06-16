@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,12 +31,19 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.NavigationUI;
 
+import com.ambulanceapp.client.common.Common;
+import com.ambulanceapp.client.common.MapForm;
 import com.ambulanceapp.client.databinding.ActivityDashboardBinding;
+import com.ambulanceapp.client.interfaces.FirebaseListener;
+import com.ambulanceapp.client.models.FirebaseRequestBody;
 import com.ambulanceapp.client.models.Users;
+import com.ambulanceapp.client.preference.TokenPref;
 import com.ambulanceapp.client.preference.UserPref;
+import com.ambulanceapp.client.services.FirebaseRequest;
 import com.ambulanceapp.client.ui.home.HomeFragment;
 import com.ambulanceapp.client.ui.hospitals.HospitalFragment;
 import com.google.android.material.navigation.NavigationView;
+import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 
 public class DashboardActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -47,7 +55,7 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
     private DrawerLayout drawer;
     private Boolean locationPermissionGranted = false;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
-
+    private FirebaseRequest request;
 
 
     @Override
@@ -56,7 +64,7 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         binding = ActivityDashboardBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
+        request = new FirebaseRequest();
         setSupportActionBar(binding.appBarMainForm.toolbar);
         drawer = binding.drawerLayout;
         binding.navView.setNavigationItemSelectedListener(this);
@@ -103,6 +111,35 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
         ft.replace(R.id.frame, fragment);
         ft.commit();
         getLocationPermission();
+        String token = Common.deviceToken;
+        if (token.equals("")) {
+            token = new TokenPref(DashboardActivity.this).getToken();
+        }
+        updateUserToken(token);
+    }
+
+    private void updateUserToken(String token) {
+        Users users = new UserPref(DashboardActivity.this).getUsers();
+
+        users.setToken(token);
+
+        Log.e("user", new Gson().toJson(users));
+        FirebaseRequestBody body = new FirebaseRequestBody.RequestBodyBuilder()
+                .setCollectionName(FirebaseRequest.USERS_COLLECTION)
+                .setParams(MapForm.convertObjectToMap(users))
+                .setDocumentID(users.getDocumentID())
+                .build();
+        request.upsertWithUserID(body, new FirebaseListener() {
+            @Override
+            public <T> void onSuccessAny(T any) {
+                Log.e("success_update_token", "true");
+            }
+
+            @Override
+            public void onError() {
+                Log.e("error_update_token", "true");
+            }
+        });
     }
 
     private void getLocationPermission() {
@@ -164,6 +201,7 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
             DialogInterface.OnClickListener dListener = (dialog, which) -> {
                 switch (which) {
                     case DialogInterface.BUTTON_NEGATIVE:
+                        updateUserToken("");
                         new UserPref(DashboardActivity.this).storeUser(new Users());
                         Toast.makeText(DashboardActivity.this, "Logout Successfully", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(DashboardActivity.this, MainActivity.class);
