@@ -109,6 +109,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        binding.btnCreateAccount.setOnClickListener(v -> {
+            signInRoleBinding = DialogSignInRoleBinding.inflate(getLayoutInflater(), null, false);
+            AlertDialog.Builder mBuilder = new AlertDialog.Builder(MainActivity.this);
+            mBuilder.setView(signInRoleBinding.getRoot());
+            initDialogViews();
+            setCreateAccountDialogListeners();
+            signRoleAlert = mBuilder.create();
+            signRoleAlert.setCancelable(true);
+            signRoleAlert.show();
+        });
+
         binding.btnGoogleSign.setOnClickListener(v -> {
 
             signInRoleBinding = DialogSignInRoleBinding.inflate(getLayoutInflater(), null, false);
@@ -119,6 +130,25 @@ public class MainActivity extends AppCompatActivity {
             signRoleAlert = mBuilder.create();
             signRoleAlert.setCancelable(true);
             signRoleAlert.show();
+        });
+    }
+
+    private void setCreateAccountDialogListeners() {
+        signInRoleBinding.spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedRole = (String) parent.getItemAtPosition(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        signInRoleBinding.btnProceed.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, CreateAccountActivity.class);
+            intent.putExtra("role", selectedRole);
+            startActivity(intent);
         });
     }
 

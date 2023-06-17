@@ -121,62 +121,66 @@ public class HospitalFragment extends Fragment {
         if (ActivityCompat.checkSelfPermission(mContext, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             getLocationPermission();
         } else {
-            providerClient.getLastLocation()
-                    .addOnSuccessListener(location -> {
-                        if (location != null) {
-                            new Handler().postDelayed(() -> {
-                                currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                                if (originalLocation == null) {
-                                    originalLocation = currentLocation;
-                                }
-                                Drawable originalDrawable = getResources().getDrawable(R.drawable.ambulance);
-                                BitmapDescriptor bitmapDescriptor = LocalDraw.getDescriptor(originalDrawable);
+            try {
+                providerClient.getLastLocation()
+                        .addOnSuccessListener(location -> {
+                            if (location != null) {
+                                new Handler().postDelayed(() -> {
+                                    currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                                    if (originalLocation == null) {
+                                        originalLocation = currentLocation;
+                                    }
+                                    Drawable originalDrawable = mContext.getResources().getDrawable(R.drawable.ambulance);
+                                    BitmapDescriptor bitmapDescriptor = LocalDraw.getDescriptor(originalDrawable);
 
-                                gMap.addMarker(new MarkerOptions()
-                                        .position(currentLocation)
-                                        .title("Your Location")
-                                        .icon(bitmapDescriptor));
-                                gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 14));
+                                    gMap.addMarker(new MarkerOptions()
+                                            .position(currentLocation)
+                                            .title("Your Location")
+                                            .icon(bitmapDescriptor));
+                                    gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 14));
 
-                                request.getNearbyPlace(currentLocation, new NearbyPlaceListener() {
-                                    @Override
-                                    public <T> void onSuccess(T any) {
-                                        if (any instanceof FullNearbyPlaceResponse) {
-                                            FullNearbyPlaceResponse fullNearbyPlaceResponse = (FullNearbyPlaceResponse) any;
-                                            if (fullNearbyPlaceResponse.getResults().size() > 0) {
-                                                List<NearbyPlaceResponse> results = removeDuplicates(fullNearbyPlaceResponse.getResults());
-                                                Drawable originalDrawable = getResources().getDrawable(R.drawable.hospital);
-                                                BitmapDescriptor bitmapDescriptor = LocalDraw.getDescriptor(originalDrawable);
-                                                for (NearbyPlaceResponse resp : results) {
-                                                    LatLng latLng = new LatLng(resp.getGeometry().getLocation().getLat(), resp.getGeometry().getLocation().getLng());
+                                    request.getNearbyPlace(currentLocation, new NearbyPlaceListener() {
+                                        @Override
+                                        public <T> void onSuccess(T any) {
+                                            if (any instanceof FullNearbyPlaceResponse) {
+                                                FullNearbyPlaceResponse fullNearbyPlaceResponse = (FullNearbyPlaceResponse) any;
+                                                if (fullNearbyPlaceResponse.getResults().size() > 0) {
+                                                    List<NearbyPlaceResponse> results = removeDuplicates(fullNearbyPlaceResponse.getResults());
+                                                    Drawable originalDrawable = getResources().getDrawable(R.drawable.hospital);
+                                                    BitmapDescriptor bitmapDescriptor = LocalDraw.getDescriptor(originalDrawable);
+                                                    for (NearbyPlaceResponse resp : results) {
+                                                        LatLng latLng = new LatLng(resp.getGeometry().getLocation().getLat(), resp.getGeometry().getLocation().getLng());
 
-                                                    Marker marker = gMap.addMarker(new MarkerOptions()
-                                                            .position(latLng)
-                                                            .title(resp.getName())
-                                                            .icon(bitmapDescriptor));
-                                                    markerList.add(marker);
-                                                    addListenersToMarkers();
-                                                    listOfHospitalLocations.add(latLng);
+                                                        Marker marker = gMap.addMarker(new MarkerOptions()
+                                                                .position(latLng)
+                                                                .title(resp.getName())
+                                                                .icon(bitmapDescriptor));
+                                                        markerList.add(marker);
+                                                        addListenersToMarkers();
+                                                        listOfHospitalLocations.add(latLng);
+                                                    }
+                                                } else {
+                                                    Toast.makeText(mContext, "There are no nearby hospital, please take a walk or drive to the nearest possible accessible location ", Toast.LENGTH_SHORT).show();
                                                 }
-                                            } else {
-                                                Toast.makeText(mContext, "There are no nearby hospital, please take a walk or drive to the nearest possible accessible location ", Toast.LENGTH_SHORT).show();
+
                                             }
-
                                         }
-                                    }
 
-                                    @Override
-                                    public void onError() {
-                                        Toast.makeText(mContext, "Failed to retrieve nearby hospitals", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
+                                        @Override
+                                        public void onError() {
+                                            Toast.makeText(mContext, "Failed to retrieve nearby hospitals", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
 
-                            }, 3000);
+                                }, 3000);
 
-                        } else {
-                            initValues();
-                        }
-                    });
+                            } else {
+                                initValues();
+                            }
+                        });
+            } catch (Exception e) {
+
+            }
         }
 
     }
@@ -232,13 +236,8 @@ public class HospitalFragment extends Fragment {
     private void runUIThread() {
         Runnable runnable = () -> {
             Log.e("runUIThread", "invoked");
-            if (currentLocation.latitude == originalLocation.latitude && currentLocation.longitude == originalLocation.longitude) {
-
-            } else {
-                getCurrentLocation();
-            }
-
-            alertEnforcers();
+            getCurrentLocation();
+            new Handler().postDelayed(() -> alertEnforcers(), 3000);
 
         };
         executor = Executors.newScheduledThreadPool(1);

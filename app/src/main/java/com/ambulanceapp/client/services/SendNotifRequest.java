@@ -65,6 +65,8 @@ public class SendNotifRequest {
                 Log.e("pushNotification_err", e.getLocalizedMessage());
             }
             listener.onError();
+        } catch (Exception e){
+            listener.onError();
         }
     }
 }

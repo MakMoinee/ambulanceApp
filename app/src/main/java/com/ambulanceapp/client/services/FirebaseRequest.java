@@ -30,6 +30,7 @@ public class FirebaseRequest {
 
     public static final String USERS_COLLECTION = "users";
     public static final String ENFORCERS_COLLECTION = "enforcers";
+    public static final String FEEDBACK_COLLECTION = "feedback";
     public static final String AMBULANCE_REFERENCE = "ambulance";
     public static final String EMAIL_STRING = "email";
     public static final String USER_ID_STRING = "userID";

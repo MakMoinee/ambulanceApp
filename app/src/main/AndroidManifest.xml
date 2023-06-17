@@ -53,6 +53,11 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyBWg7I7EJZ8iAbUJ6Z3s2yKnqWbN0qiWWs" />
 
+        <activity
+            android:name=".CreateAccountActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
+
         <service
             android:name=".services.PushNotifService"
             android:exported="false">

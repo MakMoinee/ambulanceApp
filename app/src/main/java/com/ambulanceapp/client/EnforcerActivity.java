@@ -36,6 +36,7 @@ import com.ambulanceapp.client.models.Users;
 import com.ambulanceapp.client.preference.TokenPref;
 import com.ambulanceapp.client.preference.UserPref;
 import com.ambulanceapp.client.services.FirebaseRequest;
+import com.ambulanceapp.client.ui.home.HomeFragment;
 import com.ambulanceapp.client.ui.map.EnforcerMapFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
@@ -53,6 +54,8 @@ public class EnforcerActivity extends AppCompatActivity implements NavigationVie
     Boolean locationPermissionGranted = false;
 
     FirebaseRequest request;
+    Boolean isMapActive = false;
+    Menu menu;
 
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
 
@@ -103,12 +106,24 @@ public class EnforcerActivity extends AppCompatActivity implements NavigationVie
         });
         toggle.syncState();
         setTitle("Home");
+        fragment = new HomeFragment();
+        fm = getSupportFragmentManager();
+        ft = fm.beginTransaction();
+        ft.replace(R.id.fragment, fragment);
+        ft.commit();
+        isMapActive = false;
         getLocationPermission();
         String token = Common.deviceToken;
         if (token.equals("")) {
             token = new TokenPref(EnforcerActivity.this).getToken();
         }
         updateUserToken(token);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu m) {
+        menu = m;
+        return super.onCreateOptionsMenu(m);
     }
 
     private void getLocationPermission() {
@@ -135,12 +150,6 @@ public class EnforcerActivity extends AppCompatActivity implements NavigationVie
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.enforcer, menu);
-        return true;
-    }
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -169,6 +178,7 @@ public class EnforcerActivity extends AppCompatActivity implements NavigationVie
             return true;
         } else if (item.getItemId() == R.id.nav_map) {
             getLocationPermission();
+//            getMenuInflater().inflate(R.menu.enforcer, menu);
             if (locationPermissionGranted) {
                 setTitle("Maps");
                 fragment = new EnforcerMapFragment(EnforcerActivity.this);
@@ -177,13 +187,24 @@ public class EnforcerActivity extends AppCompatActivity implements NavigationVie
                 ft.replace(R.id.fragment, fragment);
                 ft.commit();
                 drawer.closeDrawer(GravityCompat.START);
+                isMapActive = true;
+
                 return true;
             } else {
                 Toast.makeText(EnforcerActivity.this, "Allow location permission first", Toast.LENGTH_SHORT).show();
             }
 
         } else if (item.getItemId() == R.id.nav_home) {
-
+            if (menu != null) menu.clear();
+            setTitle("Home");
+            fragment = new HomeFragment();
+            fm = getSupportFragmentManager();
+            ft = fm.beginTransaction();
+            ft.replace(R.id.fragment, fragment);
+            ft.commit();
+            drawer.closeDrawer(GravityCompat.START);
+            isMapActive = false;
+            return true;
         }
         return false;
     }
@@ -210,5 +231,22 @@ public class EnforcerActivity extends AppCompatActivity implements NavigationVie
                 Log.e("error_update_token", "true");
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (isMapActive) {
+            fragment.onDestroy();
+            setTitle("Home");
+            fragment = new HomeFragment();
+            fm = getSupportFragmentManager();
+            ft = fm.beginTransaction();
+            ft.replace(R.id.fragment, fragment);
+            ft.commit();
+            drawer.closeDrawer(GravityCompat.START);
+            isMapActive = false;
+        } else {
+            super.onBackPressed();
+        }
     }
 }

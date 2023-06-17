@@ -5,6 +5,7 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -20,6 +21,7 @@ import androidx.fragment.app.Fragment;
 
 import com.ambulanceapp.client.R;
 import com.ambulanceapp.client.common.Common;
+import com.ambulanceapp.client.common.LocalDraw;
 import com.ambulanceapp.client.common.MapForm;
 import com.ambulanceapp.client.databinding.FragmentEnforcerBinding;
 import com.ambulanceapp.client.interfaces.FirebaseListener;
@@ -33,6 +35,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -107,10 +110,12 @@ public class EnforcerMapFragment extends Fragment {
                         if (location != null) {
                             new Handler().postDelayed(() -> {
                                 currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                                Drawable originalDrawable = mContext.getResources().getDrawable(R.drawable.officer);
+                                BitmapDescriptor bitmapDescriptor = LocalDraw.getDescriptor(originalDrawable);
                                 gMap.addMarker(new MarkerOptions()
                                         .position(currentLocation)
                                         .title("Your Location")
-                                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                                        .icon(bitmapDescriptor));
                                 gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 14));
                                 List<LatLng> circle = Common.createCircle(currentLocation, Common.DEFAULT_RADIUS);
                                 Users users = new UserPref(mContext).getUsers();

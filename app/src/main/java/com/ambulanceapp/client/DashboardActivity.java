@@ -40,6 +40,7 @@ import com.ambulanceapp.client.models.Users;
 import com.ambulanceapp.client.preference.TokenPref;
 import com.ambulanceapp.client.preference.UserPref;
 import com.ambulanceapp.client.services.FirebaseRequest;
+import com.ambulanceapp.client.ui.feedback.FeedbackFragment;
 import com.ambulanceapp.client.ui.home.HomeFragment;
 import com.ambulanceapp.client.ui.hospitals.HospitalFragment;
 import com.google.android.material.navigation.NavigationView;
@@ -56,6 +57,7 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
     private Boolean locationPermissionGranted = false;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private FirebaseRequest request;
+    private Boolean isMapActive = false;
 
 
     @Override
@@ -178,6 +180,7 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
             ft.replace(R.id.frame, fragment);
             ft.commit();
             drawer.closeDrawer(GravityCompat.START);
+            isMapActive = false;
             return true;
         } else if (item.getItemId() == R.id.nav_hospital) {
             getLocationPermission();
@@ -189,14 +192,26 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
                 ft.replace(R.id.frame, fragment);
                 ft.commit();
                 drawer.closeDrawer(GravityCompat.START);
+                isMapActive = true;
                 return true;
             } else {
                 Toast.makeText(DashboardActivity.this, "Please allow location permission first", Toast.LENGTH_SHORT).show();
             }
 
         } else if (item.getItemId() == R.id.nav_feedback) {
+            setTitle("Feedback");
+            fragment = new FeedbackFragment(DashboardActivity.this);
+            fm = getSupportFragmentManager();
+            ft = fm.beginTransaction();
+            ft.replace(R.id.frame, fragment);
+            ft.commit();
+            drawer.closeDrawer(GravityCompat.START);
+            isMapActive = false;
+            return true;
+
 
         } else if (item.getItemId() == R.id.nav_logout) {
+            isMapActive = false;
             AlertDialog.Builder mBuilder = new AlertDialog.Builder(DashboardActivity.this);
             DialogInterface.OnClickListener dListener = (dialog, which) -> {
                 switch (which) {
@@ -227,5 +242,24 @@ public class DashboardActivity extends AppCompatActivity implements NavigationVi
     protected void onDestroy() {
         super.onDestroy();
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (isMapActive) {
+            fragment.onDestroy();
+            setTitle("Home");
+            fragment = new HomeFragment();
+            fm = getSupportFragmentManager();
+            ft = fm.beginTransaction();
+            ft.replace(R.id.frame, fragment);
+            ft.commit();
+            drawer.closeDrawer(GravityCompat.START);
+            isMapActive = false;
+        } else {
+            super.onBackPressed();
+        }
+
+
     }
 }
